@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Menu - Warung Bu Neni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><i class="fas fa-utensils"></i> Bu Neni</a>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
+      <li><a href="/menu" class="active"><i class="fas fa-food"></i> <span>Menu</span></a></li>
+      <li><a href="/keranjang"><i class="fas fa-shopping-cart"></i> <span>Keranjang</span></a></li>
+      <li><a href="/pesanan"><i class="fas fa-receipt"></i> <span>Pesanan</span></a></li>
+      <% if (session.user && session.user.role === 'admin') { %>
+      <li><a href="/admin"><i class="fas fa-cog"></i> <span>Admin</span></a></li>
+      <% } %>
+      <% if (session.user) { %>
+      <li><a href="/auth/logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+      <% } else { %>
+      <li><a href="/auth/login"><i class="fas fa-sign-in-alt"></i> <span>Login</span></a></li>
+      <li><a href="/auth/register"><i class="fas fa-user-plus"></i> <span>Daftar</span></a></li>
+      <% } %>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="section" style="padding-top:40px">
+    <div class="container">
+      <div class="section-title">
+        <h2>Daftar Menu</h2>
+        <p>Pilih makanan dan minuman favorit kamu</p>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterMenu('semua',this)">Semua</button>
+        <button class="filter-tab" onclick="filterMenu('makanan',this)">Makanan</button>
+        <button class="filter-tab" onclick="filterMenu('minuman',this)">Minuman</button>
+      </div>
+      <div class="menu-grid" id="menuGrid">
+        <% if (menu && menu.length > 0) { %>
+          <% menu.forEach(item => { %>
+            <div class="menu-card" data-kategori="<%= item.kategori || 'makanan' %>">
+              <div class="menu-card-img">
+                <% if (item.foto) { %>
+                  <img
+                    src="https://ysjrfjrnquvyrvztzmtp.supabase.co/storage/v1/object/public/menu/<%= item.foto %>"
+                    alt="<%= item.nama %>"
+                    loading="lazy"
+                  >
+                <% } else { %>
+                  <div class="no-img"><i class="fas fa-image"></i></div>
+                <% } %>
+                <span class="menu-card-category"><%= item.kategori || 'makanan' %></span>
+              </div>
+              <div class="menu-card-body">
+                <h3><%= item.nama %></h3>
+                <p class="desc"><%= item.deskripsi || '' %></p>
+                <div class="menu-card-footer">
+                  <span class="menu-price">Rp <%= Number(item.harga).toLocaleString('id-ID') %></span>
+                  <form action="/keranjang/add" method="POST" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="menu_id" value="<%= item.id %>">
+                    <input type="hidden" name="jumlah" value="1">
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-cart-plus"></i> Tambah</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="empty-state" style="grid-column:1/-1">
+            <i class="fas fa-utensils"></i>
+            <h3>Belum ada menu</h3>
+            <p>Menu masih kosong</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2024 <strong>Warung Makan Bu Neni</strong> &mdash; Cita Rasa Nusantara</p>
+</footer>
+
+<script src="/js/effects.js"></script>
+<script>
+function filterMenu(kategori, btn) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.menu-card').forEach(c => {
+    c.style.display = (kategori === 'semua' || c.dataset.kategori === kategori) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

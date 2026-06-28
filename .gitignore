@@ -1,0 +1,11 @@
+# Upload gambar lokal
+public/uploads/
+
+# Node
+node_modules/
+
+# Environment
+.env
+
+# Logs
+*.log

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Warung Bu Neni</title>
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <!-- Theme Color untuk status bar di HP -->
+  <meta name="theme-color" content="#0EA5E9">
+  <!-- Ikon untuk iOS -->
+  <link rel="apple-touch-icon" href="/logo192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><i class="fas fa-utensils"></i> Bu Neni</a>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/" class="active"><i class="fas fa-home"></i> <span>Home</span></a></li>
+      <li><a href="/menu"><i class="fas fa-food"></i> <span>Menu</span></a></li>
+      <li><a href="/keranjang"><i class="fas fa-shopping-cart"></i> <span>Keranjang</span></a></li>
+      <li><a href="/pesanan"><i class="fas fa-receipt"></i> <span>Pesanan</span></a></li>
+      <% if (session.user && session.user.role === 'admin') { %>
+      <li><a href="/admin"><i class="fas fa-cog"></i> <span>Admin</span></a></li>
+      <% } %>
+      <% if (session.user) { %>
+      <li><a href="/auth/logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+      <% } else { %>
+      <li><a href="/auth/login"><i class="fas fa-sign-in-alt"></i> <span>Login</span></a></li>
+      <li><a href="/auth/register"><i class="fas fa-user-plus"></i> <span>Daftar</span></a></li>
+      <% } %>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <h2>Selamat Datang di Warung Bu Neni</h2>
+    <p>Cita rasa autentik Nusantara, dimasak dengan cinta dan resep turun-temurun</p>
+    <div class="hero-badges">
+      <span class="hero-badge"><i class="fas fa-star"></i> Halal</span>
+      <span class="hero-badge"><i class="fas fa-bolt"></i> Cepat Saji</span>
+      <span class="hero-badge"><i class="fas fa-heart"></i> Homemade</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-title">
+        <h2>Menu Populer</h2>
+        <p>Pilihan terbaik yang banyak dipesan pelanggan</p>
+      </div>
+      <div class="menu-grid">
+        <% if (menuPopuler && menuPopuler.length > 0) { %>
+          <% menuPopuler.forEach(item => { %>
+            <div class="menu-card">
+              <div class="menu-card-img">
+                  <% if (item.foto) { %>
+                    <img
+                      src="https://ysjrfjrnquvyrvztzmtp.supabase.co/storage/v1/object/public/menu/<%= item.foto %>"
+                      alt="<%= item.nama %>"
+                      loading="lazy"
+                      width="300"
+                      height="200"
+                      style="width:100%;height:200px;object-fit:cover;"
+                    >
+                  <% } else { %>
+                    <div class="no-img"><i class="fas fa-image"></i></div>
+                  <% } %>
+                  <span class="menu-card-category"><%= item.kategori || 'makanan' %></span>
+                </div>
+              <div class="menu-card-body">
+                <h3><%= item.nama %></h3>
+                <p class="desc"><%= item.deskripsi || 'Menu lezat pilihan Bu Neni' %></p>
+                <div class="menu-card-footer">
+                  <span class="menu-price">Rp <%= Number(item.harga).toLocaleString('id-ID') %></span>
+                  <form action="/keranjang/add" method="POST" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="menu_id" value="<%= item.id %>">
+                    <input type="hidden" name="jumlah" value="1">
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-cart-plus"></i> Tambah</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="empty-state" style="grid-column:1/-1">
+            <i class="fas fa-utensils"></i>
+            <h3>Belum ada menu</h3>
+            <p>Login admin untuk menambahkan menu</p>
+          </div>
+        <% } %>
+      </div>
+      <% if (menuPopuler && menuPopuler.length > 0) { %>
+        <div style="text-align:center;margin-top:12px">
+          <a href="/menu" class="btn btn-outline">Lihat Semua Menu <i class="fas fa-arrow-right"></i></a>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2024 <strong>Warung Makan Bu Neni</strong> &mdash; Cita Rasa Nusantara</p>
+</footer>
+
+<script src="/js/effects.js"></script>
+</body>
+</html>

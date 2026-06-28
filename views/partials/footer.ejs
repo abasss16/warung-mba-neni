@@ -1,0 +1,19 @@
+</main>
+<footer>
+  <p>&copy; 2026 Warung Bu Neni</p>
+</footer>
+
+  <!-- KITA TANAM LANGSUNG DI SINI BIAR PASTI JALAN -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('SW BERHASIL TERDAFTAR!', reg))
+          .catch(err => console.log('SW GAGAL:', err));
+      });
+    }
+  </script>
+  
+  <script src="/js/effects.js"></script>
+</body>
+</html>

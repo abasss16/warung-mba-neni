@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - Warung Bu Neni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body style="background:linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)">
+
+<nav class="navbar" style="background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.08)">
+  <div class="nav-inner">
+    <a href="/admin" class="nav-brand" style="color:#FBBF24"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/admin" class="active" style="color:rgba(255,255,255,0.7)"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+      <li><a href="#menuSection" style="color:rgba(255,255,255,0.7)"><i class="fas fa-hamburger"></i> <span>Menu</span></a></li>
+      <li><a href="#orderSection" style="color:rgba(255,255,255,0.7)"><i class="fas fa-clipboard-list"></i> <span>Pesanan</span></a></li>
+      <li><a href="/" style="color:rgba(251,191,36,0.7)"><i class="fas fa-store"></i> <span>Lihat Toko</span></a></li>
+      <li><a href="/auth/logout" style="color:rgba(239,68,68,0.8)"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="admin-section">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:30px">
+        <h2 style="font-size:1.8rem;font-weight:800;color:#FBBF24;margin-bottom:4px">Dashboard Admin</h2>
+        <p style="color:rgba(255,255,255,0.4);font-size:.9rem">Kelola warung makan Bu Neni</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+          <div class="stat-icon amber"><i class="fas fa-clock"></i></div>
+          <div><div class="stat-label" style="color:rgba(255,255,255,0.4)">Menunggu</div><div class="stat-value" style="color:#FBBF24"><%= stats.menunggu || 0 %></div></div>
+        </div>
+        <div class="stat-card" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+          <div class="stat-icon blue"><i class="fas fa-spinner"></i></div>
+          <div><div class="stat-label" style="color:rgba(255,255,255,0.4)">Diproses</div><div class="stat-value" style="color:#38BDF8"><%= stats.diproses || 0 %></div></div>
+        </div>
+        <div class="stat-card" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+          <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+          <div><div class="stat-label" style="color:rgba(255,255,255,0.4)">Selesai</div><div class="stat-value" style="color:#10B981"><%= stats.selesai || 0 %></div></div>
+        </div>
+        <div class="stat-card" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+          <div class="stat-icon amber"><i class="fas fa-money-bill-wave"></i></div>
+          <div><div class="stat-label" style="color:rgba(255,255,255,0.4)">Pendapatan</div><div class="stat-value" style="color:#FBBF24;font-size:1.1rem">Rp <%= Number(stats.pendapatan || 0).toLocaleString('id-ID') %></div></div>
+        </div>
+      </div>
+
+      <div id="menuSection" class="admin-header"><h2 style="color:#FBBF24">Kelola Menu</h2><p style="color:rgba(255,255,255,0.4)">Tambah, edit, atau hapus menu</p></div>
+      <div class="admin-actions">
+        <button class="btn btn-accent" id="btnAddMenu"><i class="fas fa-plus"></i> Tambah Menu</button>
+      </div>
+
+      <div class="table-wrapper" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+        <table class="table">
+          <thead style="background:linear-gradient(135deg,#F59E0B,#D97706)">
+            <tr><th style="color:#fff">Foto</th><th style="color:#fff">Nama</th><th style="color:#fff">Harga</th><th style="color:#fff">Kategori</th><th style="color:#fff">Aksi</th></tr>
+          </thead>
+          <tbody id="menuTableBody">
+            <% if (menu && menu.length > 0) { %>
+              <% menu.forEach(function(item) { %>
+                <tr id="row-<%= item.id %>" data-id="<%= item.id %>" data-nama="<%= item.nama %>" data-deskripsi="<%= item.deskripsi || '' %>" data-harga="<%= item.harga %>" data-kategori="<%= item.kategori || 'makanan' %>" data-foto="<%= item.foto || '' %>" style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <td>
+                    <% if (item.foto) { %>
+                      <img
+                        src="https://ysjrfjrnquvyrvztzmtp.supabase.co/storage/v1/object/public/menu/<%= item.foto %>"
+                        alt="<%= item.nama %>"
+                        loading="lazy"
+                        style="width:80px;height:80px;object-fit:cover;border-radius:10px;"
+                      >
+                    <% } else { %>
+                      <div style="width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center"><i class="fas fa-image" style="color:rgba(255,255,255,0.15)"></i></div>
+                    <% } %>
+                  </td>
+                  <td style="color:rgba(255,255,255,0.85)"><strong><%= item.nama %></strong><br><small style="color:rgba(255,255,255,0.35)"><%= (item.deskripsi || '').substring(0,40) %><% if ((item.deskripsi || '').length > 40) { %>...<% } %></small></td>
+                  <td style="font-weight:700;color:#FBBF24">Rp <%= Number(item.harga).toLocaleString('id-ID') %></td>
+                  <td style="text-transform:capitalize;color:rgba(255,255,255,0.5)"><%= item.kategori || 'makanan' %></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-warning btn-sm btn-edit"><i class="fas fa-edit"></i></button>
+                      <button class="btn btn-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr><td colspan="5" style="text-align:center;padding:40px;color:rgba(255,255,255,0.3)">Belum ada menu</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="orderSection" class="admin-header" style="margin-top:40px"><h2 style="color:#FBBF24">Pesanan Terbaru</h2></div>
+      <div class="table-wrapper" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)">
+        <table class="table">
+          <thead style="background:linear-gradient(135deg,#F59E0B,#D97706)">
+            <tr><th style="color:#fff">ID</th><th style="color:#fff">Pelanggan</th><th style="color:#fff">Total</th><th style="color:#fff">Status</th><th style="color:#fff">Tanggal</th><th style="color:#fff">Aksi</th></tr>
+          </thead>
+          <tbody id="orderTableBody">
+            <% if (recentOrders && recentOrders.length > 0) { %>
+              <% recentOrders.forEach(function(o) { %>
+                <tr id="order-row-<%= o.id %>" data-id="<%= o.id %>" style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <td style="color:rgba(255,255,255,0.6)">#<%= o.id %></td>
+                  <td style="color:rgba(255,255,255,0.85)"><%= o.user_nama || 'User' %></td>
+                  <td style="font-weight:600;color:#FBBF24">Rp <%= Number(o.total).toLocaleString('id-ID') %></td>
+                  <td><span class="status-badge status-<%= o.status %>"><%= o.status %></span></td>
+                  <td style="font-size:.82rem;color:rgba(255,255,255,0.35)"><%= new Date(o.created_at).toLocaleString('id-ID') %></td>
+                  <td>
+                    <select class="form-control status-select" style="padding:6px 30px 6px 10px;font-size:.82rem;width:auto;background:rgba(255,255,255,0.08);border:1px solid rgb(248, 244, 244);color:rgba(255,255,255,0.8)">
+                      <option value="pending" <% if (o.status === 'pending') { %>selected<% } %>>Pending</option>
+                      <option value="proses" <% if (o.status === 'proses') { %>selected<% } %>>Proses</option>
+                      <option value="selesai" <% if (o.status === 'selesai') { %>selected<% } %>>Selesai</option>
+                      <option value="dibatalkan" <% if (o.status === 'dibatalkan') { %>selected<% } %>>Dibatalkan</option>
+                    </select>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(255,255,255,0.3)">Belum ada pesanan</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="addMenuModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Tambah Menu Baru</h3><button class="modal-close modal-close-btn"><i class="fas fa-times"></i></button></div>
+    <form method="POST" action="/admin/menu/add" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="modal-body">
+        <div class="form-group"><label>Nama Menu</label><input type="text" name="nama" class="form-control" required></div>
+        <div class="form-group"><label>Deskripsi</label><textarea name="deskripsi" class="form-control"></textarea></div>
+        <div class="form-group"><label>Harga (Rp)</label><input type="number" name="harga" class="form-control" min="0" required></div>
+        <div class="form-group"><label>Kategori</label><select name="kategori" class="form-control"><option value="makanan">Makanan</option><option value="minuman">Minuman</option></select></div>
+        <div class="form-group"><label>Foto</label><input type="file" name="foto" class="form-control" accept="image/*" id="addFotoInput"><div class="photo-preview" id="addPhotoPreview"><i class="fas fa-cloud-upload-alt"></i></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+        <button type="submit" class="btn btn-accent"><i class="fas fa-save"></i> Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editMenuModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Edit Menu</h3><button class="modal-close modal-close-btn"><i class="fas fa-times"></i></button></div>
+    <form method="POST" action="/admin/menu/edit" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" id="editId">
+      <div class="modal-body">
+        <div class="form-group"><label>Nama</label><input type="text" name="nama" class="form-control" id="editNama" required></div>
+        <div class="form-group"><label>Deskripsi</label><textarea name="deskripsi" class="form-control" id="editDeskripsi"></textarea></div>
+        <div class="form-group"><label>Harga</label><input type="number" name="harga" class="form-control" id="editHarga" min="0" required></div>
+        <div class="form-group"><label>Kategori</label><select name="kategori" class="form-control" id="editKategori"><option value="makanan">Makanan</option><option value="minuman">Minuman</option></select></div>
+        <div class="form-group"><label>Ganti Foto</label><input type="file" name="foto" class="form-control" accept="image/*" id="editFotoInput"><div class="photo-preview" id="editPhotoPreview"><i class="fas fa-cloud-upload-alt"></i></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+        <button type="submit" class="btn btn-accent"><i class="fas fa-save"></i> Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><h3>Konfirmasi</h3><button class="modal-close modal-close-btn"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body"><p id="confirmText" style="text-align:center"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close-btn">Batal</button>
+      <button class="btn btn-danger" id="confirmBtn"><i class="fas fa-trash"></i> Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<footer class="footer" style="background:rgba(0,0,0,0.4)"><p>&copy; 2026 <strong style="color:#FBBF24">Warung Makan Bu Neni</strong> &mdash; Admin Panel</p></footer>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

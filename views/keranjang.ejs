@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Keranjang - Warung Bu Neni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><i class="fas fa-utensils"></i> Bu Neni</a>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/"><i class="fas fa-home"></i> <span>Home</span></a></li>
+      <li><a href="/menu"><i class="fas fa-food"></i> <span>Menu</span></a></li>
+      <li><a href="/keranjang" class="active"><i class="fas fa-shopping-cart"></i> <span>Keranjang</span></a></li>
+      <li><a href="/pesanan"><i class="fas fa-receipt"></i> <span>Pesanan</span></a></li>
+      <li><a href="/auth/logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="cart-section">
+    <div class="container">
+      <div class="section-title">
+        <h2><i class="fas fa-shopping-cart"></i> Keranjang Belanja</h2>
+        <p>Item yang sudah kamu pilih</p>
+      </div>
+
+      <% if (keranjang && keranjang.length > 0) { %>
+        <div class="cart-list">
+          <% keranjang.forEach(function(item) { %>
+            <div class="cart-item">
+              <div class="cart-item-img">
+                <% if (item.foto) { %>
+                  <img src="https://ysjrfjrnquvyrvztzmtp.supabase.co/storage/v1/object/public/menu/<%= item.foto %>" alt="<%= item.nama %>" loading="lazy">
+                <% } else { %>
+                  <div class="no-img" style="font-size:1.5rem"><i class="fas fa-image"></i></div>
+                <% } %>
+              </div>
+              <div class="cart-item-info">
+                <h3><%= item.nama %></h3>
+                <div class="cart-item-price">Rp <%= Number(item.harga).toLocaleString('id-ID') %></div>
+                <div class="cart-item-subtotal">Subtotal: Rp <%= Number(item.harga * item.jumlah).toLocaleString('id-ID') %></div>
+                <div class="qty-controls">
+                  <form action="/keranjang/update/<%= item.id %>" method="POST" style="display:inline-flex;gap:10px;align-items:center">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" name="aksi" value="kurang" class="qty-btn">-</button>
+                    <span class="qty-value"><%= item.jumlah %></span>
+                    <button type="submit" name="aksi" value="tambah" class="qty-btn">+</button>
+                  </form>
+                  <form action="/keranjang/delete/<%= item.id %>" method="POST" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+
+        <div class="cart-summary">
+          <h3><i class="fas fa-receipt"></i> Ringkasan</h3>
+          <div class="summary-row"><span>Jumlah Item</span><span><%= keranjang.length %> item</span></div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span id="cartTotalDisplay">Rp <%= Number(keranjang.reduce(function(s,i){return s+i.harga*i.jumlah},0)).toLocaleString('id-ID') %></span>
+          </div>
+
+          <form action="/pesanan/checkout" method="POST" style="margin-top:20px">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-group">
+              <label><i class="fas fa-sticky-note"></i> Catatan (opsional)</label>
+              <textarea name="catatan" class="form-control" placeholder="Contoh: tidak pakai sambal, pedas sekali..."></textarea>
+            </div>
+
+            <!-- METODE PEMBAYARAN -->
+            <div class="form-group">
+              <label style="margin-bottom:12px"><i class="fas fa-wallet"></i> Metode Pembayaran</label>
+              <div class="payment-options">
+                <label class="payment-card" id="payCash">
+                  <input type="radio" name="payment" value="cash" checked>
+                  <div class="payment-card-inner">
+                    <div class="payment-icon" style="background:linear-gradient(135deg,#10B981,#059669)">
+                      <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="payment-text">
+                      <strong>Cash</strong>
+                      <small>Bayar langsung ke kasir</small>
+                    </div>
+                    <div class="payment-check"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+                <label class="payment-card" id="payQris">
+                  <input type="radio" name="payment" value="qris">
+                  <div class="payment-card-inner">
+                    <div class="payment-icon" style="background:linear-gradient(135deg,#6366F1,#4F46E5)">
+                      <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div class="payment-text">
+                      <strong>QRIS</strong>
+                      <small>Scan QR untuk bayar</small>
+                    </div>
+                    <div class="payment-check"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- QRIS MODAL (muncul kalau pilih QRIS) -->
+            <div id="qrisBox" style="display:none;margin-top:16px">
+              <div class="qris-modal">
+                <div style="text-align:center;margin-bottom:12px">
+                  <strong style="font-size:1rem;color:var(--gold-700)">Scan QRIS untuk Pembayaran</strong>
+                </div>
+                <div class="qris-img">
+                  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+                    <rect width="200" height="200" fill="#fff" rx="8"/>
+                    <rect x="15" y="15" width="50" height="50" fill="#000" rx="4"/>
+                    <rect x="20" y="20" width="40" height="40" fill="#fff" rx="2"/>
+                    <rect x="27" y="27" width="26" height="26" fill="#000" rx="1"/>
+                    <rect x="135" y="15" width="50" height="50" fill="#000" rx="4"/>
+                    <rect x="140" y="20" width="40" height="40" fill="#fff" rx="2"/>
+                    <rect x="147" y="27" width="26" height="26" fill="#000" rx="1"/>
+                    <rect x="15" y="135" width="50" height="50" fill="#000" rx="4"/>
+                    <rect x="20" y="140" width="40" height="40" fill="#fff" rx="2"/>
+                    <rect x="27" y="147" width="26" height="26" fill="#000" rx="1"/>
+                    <rect x="75" y="15" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="15" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="15" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="30" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="30" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="45" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="45" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="45" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="120" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="90" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="90" width="10" height="10" fill="#000"/>
+                    <rect x="135" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="150" y="90" width="10" height="10" fill="#000"/>
+                    <rect x="165" y="75" width="10" height="10" fill="#000"/>
+                    <rect x="180" y="90" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="105" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="105" width="10" height="10" fill="#000"/>
+                    <rect x="120" y="105" width="10" height="10" fill="#000"/>
+                    <rect x="150" y="105" width="10" height="10" fill="#000"/>
+                    <rect x="165" y="105" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="120" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="120" width="10" height="10" fill="#000"/>
+                    <rect x="135" y="120" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="120" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="150" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="165" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="180" y="135" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="150" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="150" width="10" height="10" fill="#000"/>
+                    <rect x="135" y="150" width="10" height="10" fill="#000"/>
+                    <rect x="150" y="150" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="90" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="120" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="135" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="165" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="180" y="165" width="10" height="10" fill="#000"/>
+                    <rect x="75" y="180" width="10" height="10" fill="#000"/>
+                    <rect x="105" y="180" width="10" height="10" fill="#000"/>
+                    <rect x="135" y="180" width="10" height="10" fill="#000"/>
+                    <rect x="150" y="180" width="10" height="10" fill="#000"/>
+                    <rect x="165" y="180" width="10" height="10" fill="#000"/>
+                    <rect x="180" y="180" width="10" height="10" fill="#000"/>
+                  </svg>
+                </div>
+                <div style="text-align:center;margin-top:12px">
+                  <p style="font-size:.82rem;color:var(--gold-600);font-weight:500">Total: <span id="qrisTotal" style="font-weight:800"></span></p>
+                  <p style="font-size:.75rem;color:var(--gold-400);margin-top:4px">Scan dengan aplikasi e-wallet (GoPay, OVO, DANA, dll)</p>
+                  <p style="font-size:.75rem;color:var(--gold-400)">Setelah bayar, klik tombol Pesan di bawah</p>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-accent btn-lg" style="width:100%;margin-top:16px">
+              <i class="fas fa-paper-plane"></i> Pesan Sekarang
+            </button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <i class="fas fa-shopping-cart"></i>
+          <h3>Keranjang masih kosong</h3>
+          <p>Yuk pilih menu favorit kamu</p>
+          <a href="/menu" class="btn btn-primary" style="margin-top:16px"><i class="fas fa-food"></i> Lihat Menu</a>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><p>&copy; 2024 <strong>Warung Makan Bu Neni</strong> &mdash; Cita Rasa Nusantara</p></footer>
+
+<script src="/js/effects.js"></script>
+<script>
+(function(){
+  var cashRadio = document.querySelector('input[value="cash"]');
+  var qrisRadio = document.querySelector('input[value="qris"]');
+  var qrisBox = document.getElementById('qrisBox');
+  var qrisTotal = document.getElementById('qrisTotal');
+  var totalText = document.getElementById('cartTotalDisplay').textContent;
+
+  qrisTotal.textContent = totalText;
+
+  cashRadio.addEventListener('change', function(){
+    qrisBox.style.display = 'none';
+  });
+  qrisRadio.addEventListener('change', function(){
+    qrisBox.style.display = 'block';
+  });
+})();
+</script>
+</body>
+</html>
