@@ -134,4 +134,10 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('Server running: http://localhost:3000'));
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(3000, () => {
+    console.log('Server running: http://localhost:3000');
+  });
+}
+
+module.exports = app;
