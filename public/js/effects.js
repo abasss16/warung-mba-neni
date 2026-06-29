@@ -136,3 +136,14 @@ console.log('%c Warung Bu Neni %c Sky Blue Theme Loaded ',
   'background: #0EA5E9; color: #fff; padding: 4px 8px; border-radius: 4px 0 0 4px; font-weight: bold;',
   'background: #0369A1; color: #fff; padding: 4px 8px; border-radius: 0 4px 4px 0;'
 );
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(reg => {
+      console.log('SW REGISTERED', reg);
+    })
+    .catch(err => {
+      console.error('SW ERROR', err);
+    });
+}
