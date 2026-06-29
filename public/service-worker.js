@@ -1,22 +1,33 @@
 const CACHE_NAME = 'warung-bu-neni-v1';
 const ASSETS_TO_CACHE = [
   '/',
-  '/style.css',
-  '/js/effects.js',
+  '/menu',
+  '/keranjang',
+  '/pesanan',
+  '/auth/login',
+  '/auth/register',
   '/offline.html',
+  '/manifest.json',
   '/logo192.png',
-  '/logo512.png',
-  '/manifest.json'
+  '/logo512.png'
 ];
+
 
 // Install Event: cache core assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching static assets');
-      return cache.addAll(ASSETS_TO_CACHE);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of ASSETS_TO_CACHE) {
+        try {
+          await cache.add(asset);
+          console.log('✅ Cached:', asset);
+        } catch (err) {
+          console.error('❌ Failed to cache:', asset, err);
+        }
+      }
     })
   );
+
   self.skipWaiting();
 });
 
@@ -63,13 +74,17 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // If network fails, try to serve from cache
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // If not in cache, return the offline fallback page
-            return caches.match('/offline.html');
-          });
+          return caches.match(event.request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+
+              return caches.match('/');
+            })
+            .then((response) => {
+              return response || caches.match('/offline.html');
+            });
         })
     );
     return;
@@ -81,13 +96,13 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      
+
       return fetch(event.request).then((response) => {
         // Skip caching dynamic or non-ok responses
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-        
+
         const responseCopy = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseCopy);
