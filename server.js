@@ -89,7 +89,16 @@ app.use((req, res, next) => {
   }
   
   // Perform CSRF validation
-  const clientToken = req.body._csrf || req.headers['x-csrf-token'];
+  if (
+    req.path === '/admin/menu/add' ||
+    req.path === '/admin/menu/edit'
+  ) {
+    return next();
+  }
+
+  const clientToken =
+    req.body?._csrf ||
+    req.headers['x-csrf-token'];
   if (!clientToken || clientToken !== csrfToken) {
     return res.status(403).send('CSRF token validation failed. Silakan muat ulang halaman.');
   }
